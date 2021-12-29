@@ -36,3 +36,11 @@ ManageFormSet = formset_factory(
     can_delete=False,
     extra = 0,
 )
+
+class TransactionForm(forms.Form):
+    amount = forms.DecimalField(decimal_places=2, max_digits=9)
+    recipiant = forms.ModelChoiceField(queryset=None)
+
+    def __init__(self, queryset, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['recipiant'].queryset = queryset

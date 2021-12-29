@@ -1,0 +1,22 @@
+<!doctype HTML>
+<head></head>
+<body>
+    <a href = {% url 'transaction-new' group_id %}>Nowa tranzakcja</a>
+    <ul>    
+        {% for info in balances %}
+        <li>
+            {{info.amount}} winny użytkownikowi {{info.userTo.username}}
+        </li>
+        {% endfor %}
+    </ul>
+    <br>
+    <br>
+    <ul>    
+        {% for element in transactions %}
+        <li>
+            {{element.sender.username}} to {{element.recipiant.username}}: {{element.amount}}
+        </li>
+        {% endfor %}
+    </ul>
+    
+</body>

@@ -1,6 +1,8 @@
 <!doctype HTML>
 <head></head>
 <body>
+    <a href={% url 'profile' group_id %}>Profil</a>
+    <br>
     <a href={% url 'reciept-add' group_id %}>Dodaj paragon</a>
     <ul>    
         {% for element in reciepts %}
@@ -11,5 +13,6 @@
         </li>
         {% endfor %}
     </ul>
+    
     
 </body>

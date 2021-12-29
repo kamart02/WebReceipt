@@ -2,10 +2,11 @@ from typing import get_origin
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import Group, Reciept, Item, ItemInfo
-from .forms import GroupForm, ItemFormSet, ManageForm, ManageFormSet
+from .models import Group, GroupUserProfile, Reciept, Item, ItemInfo, Transaction
+from .forms import GroupForm, ItemFormSet, ManageForm, ManageFormSet, TransactionForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import  PermissionDenied
+from django.db.models import Q
 
 
 
@@ -105,19 +106,32 @@ def recieptManage(request, id , group_id):
 
     if request.method == 'POST':
         formset = ManageFormSet(data = request.POST)
+        
         if formset.is_valid():
+            balanceChange = 0
             for form in formset:
                 if form.cleaned_data != {}:
-                    print(form.cleaned_data)
+                    # print(form.cleaned_data)
                     info = itemList.get(id = form.cleaned_data['itemId']).iteminfo_set.get(user=request.user)
                     info.amount = form.cleaned_data['purchasedAmount']
+                    newCost = info.amount * info.item.price
+                    balanceChange += newCost - info.cost 
+                    info.cost = newCost
                     info.save()
+            ownerGroupProfile, _ = reciept.owner.groupuserprofile_set.get_or_create(group = group)
+            ownerBalanceInfo, _ = ownerGroupProfile.balanceinfo_set.get_or_create(userTo = request.user)
+            currentUserGroupProfile, _ = group.groupuserprofile_set.get_or_create(user=request.user)
+            currentUserBalanceInfo, _ = currentUserGroupProfile.balanceinfo_set.get_or_create(userTo = reciept.owner)
+            ownerBalanceInfo.amount -= balanceChange
+            currentUserBalanceInfo.amount += balanceChange
+            ownerBalanceInfo.save()
+            currentUserBalanceInfo.save()
+
         else:
             print(formset.errors)
         return redirect('reciept-view', id = id, group_id=group_id)
 
     formset = ManageFormSet(None, initial = initial)
-    print (formset)
 
     itemList = zip(itemList, formset)
 
@@ -174,8 +188,65 @@ def addReciept(request, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    group = Group.objects.get(id = group_id)
+    
     reciept = Reciept(wholeCost = 0, group = group, owner = request.user)
     reciept.save()
 
     return redirect('reciept-edit', id=reciept.id, group_id=group_id)
+
+@login_required
+def profile(request, group_id):
+    group = get_object_or_404(Group, id = group_id)
+    if not group.accounts.filter(username = request.user.username).exists():
+        raise PermissionDenied
+
+    groupUserProfile, _ = group.groupuserprofile_set.get_or_create(user = request.user)
+    balancesInfo = groupUserProfile.balanceinfo_set.all()
+
+    transactions = group.transaction_set.filter(Q(sender = request.user) | Q(recipiant = request.user))
+
+    context = {
+        'balances': balancesInfo,
+        'transactions': transactions,
+        'group_id': group_id
+    }
+
+    return render(request, 'reciept/profile.html', context)
+
+def newTransaction(request, group_id):
+    group = get_object_or_404(Group, id = group_id)
+    if not group.accounts.filter(username = request.user.username).exists():
+        raise PermissionDenied
+
+    accounts = group.accounts.all()
+
+    if request.method == 'POST':
+        form = TransactionForm(queryset=accounts, data = request.POST)
+        if form.is_valid():
+            newTransaction = Transaction(
+                amount = form.cleaned_data['amount'],
+                recipiant =  form.cleaned_data['recipiant'],
+                sender = request.user,
+                group = group
+            )
+            newTransaction.save()
+            recipiantUserGroupProfile, _ = group.groupuserprofile_set.get_or_create(user = form.cleaned_data['recipiant'])
+            userGroupProfile, _ = group.groupuserprofile_set.get_or_create(user = request.user)
+            recipiantBalance, _ = recipiantUserGroupProfile.balanceinfo_set.get_or_create(userTo = request.user)
+            userBalance, _ = userGroupProfile.balanceinfo_set.get_or_create(userTo = form.cleaned_data['recipiant'])
+
+            recipiantBalance.amount += form.cleaned_data['amount']
+            userBalance.amount -= form.cleaned_data['amount']
+            recipiantBalance.save()
+            userBalance.save()
+
+            return redirect('profile', group_id=group_id)
+
+    
+    form = TransactionForm(queryset=accounts)
+
+    context = {
+        'form': form,
+    }
+
+    return render(request, 'reciept/newTransaction.html', context)
