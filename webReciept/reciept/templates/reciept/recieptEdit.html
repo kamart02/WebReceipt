@@ -1,0 +1,36 @@
+<!doctype HTML>
+<head></head>
+<body>
+    <a href={% url 'index' %}>Powrot</a>
+    <p>Data dodania: {{reciept.date}} {{reciept.time}}</p>
+     <form method="post">
+     {% csrf_token %}
+    {{ formset.management_form }}
+    <table>
+        <tr>
+            <th> Nazwa </th>
+            <th> Ilość </th>
+            <th> Cena </th>
+            <th> Czy usunąć? <th>
+        </tr>
+       
+            
+            {% for form in formset %}
+                <tr>
+                {% for field in form.visible_fields%}
+                    <td> {{ field }} </td>
+                {% endfor %}
+                </tr>
+                {% for field in form.hidden_fields%}
+                {{ field }}
+                {% endfor %}
+            {% endfor %}
+            
+       
+       
+    </table>
+    <button>Submit</button>
+     </form>
+
+    
+</body>

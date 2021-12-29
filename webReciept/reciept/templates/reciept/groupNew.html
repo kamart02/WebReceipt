@@ -1,0 +1,12 @@
+<!doctype HTML>
+<head></head>
+<body>
+    <a href={% url 'index' %}>Powrot</a>
+    <form method="post">
+    {% csrf_token %}
+    {{ form }}
+    <button type='submit'>Submit</button>
+     </form>
+
+    
+</body>

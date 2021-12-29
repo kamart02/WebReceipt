@@ -1,0 +1,24 @@
+<head></head>
+<body>
+    <a href={% url 'index'%}>Powrot</a>
+    <p>Data dodania: {{reciept.date}} {{reciept.time}}</p>
+    <p>Koszt całkowity: {{reciept.wholeCost}}</p>
+    <a href={% url 'reciept-edit' group_id reciept.id  %}>Edytuj paragon</a>
+    <br>
+    <a href={% url 'reciept-manage' group_id reciept.id  %}>Wybierz zakupione produkty</a>
+    <table>
+        <tr>
+            <th> Nazwa </th>
+            <th> Ilość </th>
+            <th> Cena </th>
+            <th> Koszt </th>
+        </tr>
+        {% for item in items %}
+        <tr>
+            <td> {{item.name}} </td>
+            <td> {{item.amount.normalize}} </td>
+            <td> {{item.price}} </td>
+            <td> {{item.cost}} </td>
+        </tr>
+        {% endfor %}
+</body

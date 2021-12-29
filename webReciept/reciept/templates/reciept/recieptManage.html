@@ -1,0 +1,34 @@
+<head></head>
+<body>
+    <a href={% url 'index'%}>Powrot</a>
+    <p>Data dodania: {{reciept.date}} {{reciept.time}}</p>
+    <p>Koszt całkowity: {{reciept.wholeCost}}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table>
+            <tr>
+                <th> Nazwa </th>
+                <th> Ilość </th>
+                <th> Cena </th>
+                <th> Koszt </th>
+                <th> Kupiona ilość</th>
+            </tr>
+            {% for item, formset in items %}
+            <tr>
+                <td> {{item.name}} </td>
+                <td> {{item.amount.normalize}} </td>
+                <td> {{item.price}} </td>
+                <td> {{item.cost}} </td>
+                {% for field in formset.visible_fields %}
+                    <td> {{field}} </td>
+                {% endfor %}
+                {% for field in formset.hidden_fields %}
+                    {{ field }}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+        <button type='submit' value='Submit'>Submit</button>
+    </form>
+</body>

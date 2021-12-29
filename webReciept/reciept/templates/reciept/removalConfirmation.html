@@ -1,0 +1,10 @@
+<!doctype HTML>
+<head></head>
+<body>
+    <h1>Czy jesteś pewien aby usunąć paragon?</h1>
+    <p>Data dodania paragonu: {{date}} {{time}}</p>
+    <a href={% url 'index' %}>Nie</a>
+    <br>
+    <br>
+    <a href={% url 'reciept-remove-confirmed' group_id id%}>Tak</a>
+</body>

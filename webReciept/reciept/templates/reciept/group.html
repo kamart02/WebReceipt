@@ -1,0 +1,13 @@
+<!doctype HTML>
+<head></head>
+<body>
+    <a href = {% url 'group-new' %}>Nowa grupa</a>
+    <ul>    
+        {% for element in groups %}
+        <li>
+            <a href = {% url 'reciept-list' element.id %}>{{element.name}}</p>
+        </li>
+        {% endfor %}
+    </ul>
+    
+</body>

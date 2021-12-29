@@ -1,0 +1,15 @@
+<!doctype HTML>
+<head></head>
+<body>
+    <a href={% url 'reciept-add' group_id %}>Dodaj paragon</a>
+    <ul>    
+        {% for element in reciepts %}
+        <li>
+            <a href={% url 'reciept-view' group_id element.id %}>{{element.date}} {{element.time}}</a>
+            <br>
+            <a href={% url 'reciept-remove' group_id element.id %}>Usuń</a>
+        </li>
+        {% endfor %}
+    </ul>
+    
+</body>
