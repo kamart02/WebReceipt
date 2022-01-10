@@ -2,7 +2,7 @@ from typing import get_origin
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import Group, GroupUserProfile, Reciept, Item, ItemInfo, Transaction
+from .models import Group, Reciept, Item, ItemInfo, Transaction
 from .forms import GroupForm, ItemFormSet, ManageForm, ManageFormSet, TransactionForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import  PermissionDenied
@@ -108,24 +108,14 @@ def recieptManage(request, id , group_id):
         formset = ManageFormSet(data = request.POST)
         
         if formset.is_valid():
-            balanceChange = 0
             for form in formset:
                 if form.cleaned_data != {}:
                     # print(form.cleaned_data)
-                    info = itemList.get(id = form.cleaned_data['itemId']).iteminfo_set.get(user=request.user)
-                    info.amount = form.cleaned_data['purchasedAmount']
-                    newCost = info.amount * info.item.price
-                    balanceChange += newCost - info.cost 
-                    info.cost = newCost
-                    info.save()
-            ownerGroupProfile, _ = reciept.owner.groupuserprofile_set.get_or_create(group = group)
-            ownerBalanceInfo, _ = ownerGroupProfile.balanceinfo_set.get_or_create(userTo = request.user)
-            currentUserGroupProfile, _ = group.groupuserprofile_set.get_or_create(user=request.user)
-            currentUserBalanceInfo, _ = currentUserGroupProfile.balanceinfo_set.get_or_create(userTo = reciept.owner)
-            ownerBalanceInfo.amount -= balanceChange
-            currentUserBalanceInfo.amount += balanceChange
-            ownerBalanceInfo.save()
-            currentUserBalanceInfo.save()
+                    itemInfo = itemList.get(id = form.cleaned_data['itemId']).iteminfo_set.get(user=request.user)
+                    itemInfo.amount = form.cleaned_data['purchasedAmount']
+                    itemInfo.save()
+            recieptInfo, _ = reciept.recieptinfo_set.get_or_create(user = request.user)
+            recieptInfo.save()
 
         else:
             print(formset.errors)
@@ -208,11 +198,13 @@ def profile(request, group_id):
     context = {
         'balances': balancesInfo,
         'transactions': transactions,
-        'group_id': group_id
+        'group_id': group_id,
+        'user': request.user,
     }
 
     return render(request, 'reciept/profile.html', context)
 
+@login_required
 def newTransaction(request, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():

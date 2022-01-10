@@ -1,7 +1,8 @@
 <!doctype HTML>
 <head></head>
 <body>
-    <a href = {% url 'transaction-new' group_id %}>Nowa tranzakcja</a>
+    <a href = {% url 'transaction-new' group_id %}>Nowa transakcja</a>
+    <p>{{user.username}}</p>
     <ul>    
         {% for info in balances %}
         <li>
