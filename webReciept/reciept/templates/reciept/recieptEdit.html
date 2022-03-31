@@ -1,4 +1,6 @@
-<!doctype HTML>
+{% extends 'reciept/mainModule.html' %}
+
+{% comment %} <!doctype HTML>
 <head></head>
 <body>
     <a href={% url 'index' %}>Powrot</a>
@@ -33,4 +35,91 @@
      </form>
 
     
-</body>
+</body> {% endcomment %}
+
+
+
+{% load tags %}
+
+{% block content %}
+
+<script type='text/html' id='itemTemplate'>
+    <tr>
+        <td> {{ formset.empty_form.name }} </td>
+        <td> {{ formset.empty_form.price }} </td>
+        <td> {{ formset.empty_form.amount }} </td>
+        <td> {{ formset.empty_form.DELETE }} </td>
+        {{ formset.empty_form.id }} 
+        {{formset.empty_form.reciept}} 
+    </tr>
+</script>
+
+<div class='container'>
+    <h1 class='text-black mt-4 ms-3'>
+        Edit reciept details
+    </h1>
+    <h3 class='text-muted mb-3 ms-3'>
+        Edit the name, amount and cost of items. <span class='text-decoration-underline'>Remember editing or adding items will recalculate balances.</snan>
+    </h3>
+    <div id='recieptItems' class='mt-3'>
+        <form method='post' class='d-flex flex-column'>
+            {% csrf_token %}
+            {{ formset.management_form }}
+            <table class='table'>
+                <thead>
+                    <tr>
+                        <td>
+                            Item name
+                        </td>
+                        <td>
+                            Item price
+                        </td>
+                        <td>
+                            Item amount
+                        </td>
+                        <td>
+                            Remove item?
+                        </td>
+                    </tr>
+                </thead>
+                <tbody id='itemContainer'>
+                    {% for form in formset %}
+                        <tr>
+                                <td> {{ form.name }} </td>
+                                <td> {{ form.price }} </td>
+                                <td> {{ form.amount }} </td>
+                                <td> {{ form.DELETE }} </td>
+                            {% for field in form.hidden_fields%}
+                                {{ field }}
+                            {% endfor %}
+                            
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button id = 'newItem' type='button' class='btn btn-light'>Add a new item</button>
+            <button type='submit' class='btn btn-primary mt-5'>Submit</button>
+        </form>
+        {% if formset.errors %}
+            <p>An error ocurred while processing form</p>
+        {% endif %}
+    </div>
+</div>
+
+<script defer>
+    let addItem = (e) => {
+        e.preventDefault();
+
+        let count = document.querySelector('#itemContainer').children.length;
+        let template = document.querySelector('#itemTemplate').innerHTML.replaceAll(/__prefix__/g, count);
+        document.querySelector('#itemContainer').insertAdjacentHTML('beforeend' ,template)
+        document.querySelector('#id_item_set-TOTAL_FORMS').setAttribute('value', count + 1)
+    }
+
+    let button = document.querySelector('#newItem')
+    
+    button.addEventListener('click', addItem)
+</script>
+
+{% endblock %}
+

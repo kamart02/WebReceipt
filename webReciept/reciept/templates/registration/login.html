@@ -1,31 +1,56 @@
-{% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
-{% endif %}
+{% extends 'reciept/mainModule.html' %}
 
-{% if next %}
-{% if user.is_authenticated %}
-  <p>Your account doesn't have access to this page. To proceed,
-  please login with an account that has access.</p>
-{% else %}
-  <p>Please login to see this page.</p>
-{% endif %}
-{% endif %}
+{% block additionalCSS %}
+<style>
+    html, body {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    #content {
+        height: 100%;
+    }
+    #loginForm {
+        width: 100%;
+        max-width: 330px;
+        margin: auto;
+        
+    }
+    
+</style>
+{% endblock %}
 
-<form method="post" action="{% url 'login' %}">
-{% csrf_token %}
-<table>
-  <tr>
-    <td>{{ form.username.label_tag }}</td>
-    <td>{{ form.username }}</td>
-  </tr>
-  <tr>
-    <td>{{ form.password.label_tag }}</td>
-    <td>{{ form.password }}</td>
-  </tr>
-</table>
-<input type="submit" value="login" />
-<input type="hidden" name="next" value="{{ next }}" />
-</form>
+{% block content %}
+    <div class='container-fluid h-100'>
+        <div id ='loginForm' class='text-center h-100 d-flex align-items-center'>
+            <form method='post' class='d-flex flex-column w-100 align-items-center'>
+                {% csrf_token %}
+                <h1 class='display-5 mb-5'>
+                    Login
+                </h1>
+                {% if next %}
+                    {% if user.is_authenticated %}
+                        <p>Your account doesn't have access to this page. To proceed,
+                        please login with an account that has access.</p>
+                    {% else %}
+                        <p class='mt-1'>Please login to see this page.</p>
+                    {% endif %}
+                    {% endif %}
+                {{form.username}}
+                {{form.password}}
 
-{# Assumes you setup the password_reset view in your URLconf #}
-<p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+                {% if form.errors %}
+                    <p class='mt-2 '>
+                        Your username and password didn't match. Please try again.
+                    </p>
+                {% endif %}
+
+                <input type="hidden" name="next" value="{{ next }}">
+                <button type = 'submit' class='btn btn-primary w-100 mt-5'>
+                    Log in
+                </button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

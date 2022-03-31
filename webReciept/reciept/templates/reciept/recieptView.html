@@ -1,24 +1,120 @@
-<head></head>
-<body>
-    <a href={% url 'index'%}>Powrot</a>
-    <p>Data dodania: {{reciept.date}} {{reciept.time}}</p>
-    <p>Koszt całkowity: {{reciept.wholeCost}}</p>
-    <a href={% url 'reciept-edit' group_id reciept.id  %}>Edytuj paragon</a>
-    <br>
-    <a href={% url 'reciept-manage' group_id reciept.id  %}>Wybierz zakupione produkty</a>
-    <table>
-        <tr>
-            <th> Nazwa </th>
-            <th> Ilość </th>
-            <th> Cena </th>
-            <th> Koszt </th>
-        </tr>
-        {% for item in items %}
-        <tr>
-            <td> {{item.name}} </td>
-            <td> {{item.amount.normalize}} </td>
-            <td> {{item.price}} </td>
-            <td> {{item.cost}} </td>
-        </tr>
-        {% endfor %}
-</body
+{% extends 'reciept/mainModule.html' %}
+
+{% load tags %}
+
+{% block content %}
+
+<div class='container'>
+    <h1 class='text-black mt-4 ms-3'>
+        Reciept details
+    </h1>
+    <h3 class='text-muted mb-3 ms-3'>
+        See detailed information about the reciept
+    </h3>
+    <div id='recieptInfo'>
+        <div class='card-group'>
+                <div class='card'>
+                    <div class='card-body'>
+                        <h5 class='card-title'>
+                            Owner
+                        </h5>
+                        <p class='card-text'>
+                            {% if reciept.owner.first_name%}
+                                {{reciept.owner.first_name}} {{reciept.owner.last_name}} {% if reciept.owner == user%}(me){% endif %}
+                            {% else %}
+                                {{reciept.owner.username}} {% if reciept.owner == user%}(me){% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class='card'>
+                    <div class='card-body'>
+                        <h5 class='card-title'>
+                            Date
+                        </h5>
+                        <p class='card-text'>
+                            {{reciept.date}} {{reciept.time}}
+                        </p>
+                    </div>
+                </div>
+                <div class='card'>
+                    <div class='card-body'>
+                        <h5 class='card-title'>
+                            Sum of all items costs
+                        </h5>
+                        <p class='card-text'>
+                            {{reciept.wholeCost|floatformat:2}}
+                        </p>
+                    </div>
+                </div>
+            {% if reciept.owner != user %}
+                <div class='card'>
+                    <div class='card-body'>
+                        <h5 class='card-title'>
+                            Sum of bought items costs
+                        </h5>
+                        <p class='card-text'>
+                            {{wholeBoughtCost|floatformat:2}}
+                        </p>
+                    </div>
+                </div>
+                <div class='card'>
+                    <div class='card-body'>
+                        <a href={% url 'reciept-manage' group_id reciept.id %} class='card-body text-decoration-none d-flex justify-content-center align-items-center'>
+                            <p class='card-text text-muted'>
+                                Edit bought items
+                            </p>
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class='card'>
+                    <a href={% url 'reciept-edit' group_id reciept.id %} class='card-body text-decoration-none d-flex justify-content-center align-items-center'>
+                        <p class='card-text text-muted'>
+                            Edit this reciept
+                        </p>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div id='recieptItems' class='mt-3'>
+        <table class='table'>
+            <thead>
+                <tr>
+                    <td>
+                        Item name
+                    </td>
+                    <td>
+                        Item price
+                    </td>
+                    <td>
+                        Item amount
+                    </td>
+                    <td>
+                        Item cost
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td style='min-width: 100px; max-width:1px' class='overflow-hidden'>
+                            {{item.name}}
+                        </td>
+                        <td>
+                            {{item.price|floatformat:'2'}}
+                        </td>
+                        <td>
+                            {{item.amount|cutZeros}}
+                        </td>
+                        <td>
+                            {{item.cost|floatformat:'2'}}
+                        </td>
+                    </tr>
+                {% endfor %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}

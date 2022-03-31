@@ -1,0 +1,65 @@
+{% extends 'reciept/mainModule.html' %}
+
+{% block additionalCSS %}
+<style>
+    html, body {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    #content {
+        height: 100%;
+    }
+    #loginForm {
+        width: 100%;
+        max-width: 330px;
+        margin: auto;
+        
+    }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class='container-fluid h-100'>
+        <div id ='loginForm' class='text-center h-100 d-flex align-items-center'>
+            <form method='post' class='d-flex flex-column w-100 align-items-center'>
+                {% csrf_token %}
+                <h1 class='display-5 mb-5'>
+                    Sign-up
+                </h1>
+                {{form.username}}
+                {% if form.errors.username %}
+                    <p class='text-muted'>
+                        Username already exists
+                    </p>
+                {% endif %}
+                {{form.email}}
+                {% if form.errors.email %}
+                    <p class='text-muted'>
+                        Invalid email
+                    </p>
+                {% endif %}
+                {{form.password1}}
+                {{form.password2}}
+                {% if form.errors.password2 %}
+                    <p class='text-muted'>
+                        Passwords not matching
+                    </p>
+                {% endif %}
+                {% if form.errors.password1 %}
+                    <p class='text-muted'>
+                        Insufficient password
+                    </p>
+                {% endif %}
+                {{form.firstName}}
+                {{form.lastName}}
+
+                <button type = 'submit' class='btn btn-primary w-100 mt-5'>
+                    Sign-up
+                </button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

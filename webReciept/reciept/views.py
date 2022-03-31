@@ -1,77 +1,90 @@
+from genericpath import exists
 from typing import get_origin
+from xml.dom import ValidationErr
+from django.forms import ValidationError
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Group, Reciept, Item, ItemInfo, Transaction
-from .forms import GroupForm, ItemFormSet, ManageForm, ManageFormSet, TransactionForm
+from .forms import GroupForm, ItemFormSet, ManageForm, ManageFormSet, SignupForm, TransactionForm, LoginForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import  PermissionDenied
 from django.db.models import Q
+from django.contrib.auth import authenticate, login, logout, password_validation
+from django.contrib.auth.models import User
+from .temporaryModels import BalanceInfo, RecieptInfo
 
 
+def index(request):
+    if request.user.is_authenticated:
+        return redirect('groupView')
+    else:
+        return render(request, 'reciept/index.html')
 
-# Create your views here.
-
-from django.http import HttpResponse
-import datetime
-
-@login_required
+@login_required(redirect_field_name='next', login_url='/accounts/login')
 def recieptList(request, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
     reciepts = Reciept.objects.filter(group = group).order_by('-date', '-time')
+
+    accounts = group.accounts.exclude(id = request.user.id)
+    amounts = []
+    recieptAmounts = []
+
+    for account in accounts:
+        balinfo = BalanceInfo(user = request.user, group = group, userTo = account)
+        amounts.append(balinfo.amount())
+
+
     context = {
         'reciepts': reciepts,
-        'group_id': group_id
+        'group_id': group_id,
+        'accounts': zip(accounts, amounts),
     }
-    return render(request, 'reciept/index.html', context)
+    return render(request, 'reciept/recieptList.html', context)
 
-@login_required
+@login_required(redirect_field_name='next', login_url='/accounts/login')
 def groupView(request):
     groups = Group.objects.filter(accounts__username = request.user.username)
     context = {
         'groups': groups,
     }
-    return render(request, 'reciept/group.html', context)
+    return render(request, 'reciept/groupView.html', context)
 
-@login_required
-def recieptView(request, id, group_id):
-    reciept = get_object_or_404(Reciept, id=id)
+@login_required(redirect_field_name='next', login_url='/accounts/login')
+def recieptView(request, reciept_id, group_id):
+    reciept = get_object_or_404(Reciept, id = reciept_id)
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
     itemList = Item.objects.filter(reciept = reciept)
 
+    recieptinfo = RecieptInfo(user = request.user, reciept = reciept)
+
     context = {
         'items': itemList,
         'reciept': reciept,
-        'group_id': group_id
+        'group_id': group_id,
+        'wholeBoughtCost': recieptinfo.cost()
     }
 
     return render(request, 'reciept/recieptView.html', context)
 
-@login_required
-def recieptEdit(request, id, group_id):
+@login_required(redirect_field_name='next', login_url='/accounts/login')
+def recieptEdit(request, reciept_id, group_id):
     group = get_object_or_404(Group, id = group_id)
-    reciept = get_object_or_404(Reciept, id=id)
+    reciept = get_object_or_404(Reciept, id = reciept_id)
     if not reciept.owner == request.user:
         raise PermissionDenied
-    formset = ItemFormSet(request.POST or None, instance=reciept)
+    formset = ItemFormSet(request.POST or None, instance = reciept)
 
     if request.method == 'POST':
         if formset.is_valid():
             formset.instance = reciept
             formset.save()
-            cost = 0
-            itemList = Item.objects.filter(reciept=reciept)
-            for item in itemList:
-                item.cost = item.amount*item.price
-                item.save()
-                cost+=item.amount*item.price
-            reciept.wholeCost = cost
-            reciept.save()
-            return redirect('reciept-view', id = id, group_id=group_id)
+            
+            return redirect('reciept-list', group_id=group_id)
 
     context = {
         'formset' : formset,
@@ -81,10 +94,10 @@ def recieptEdit(request, id, group_id):
     
     return render(request, 'reciept/recieptEdit.html', context)
 
-@login_required
-def recieptManage(request, id , group_id):
+@login_required(redirect_field_name='next', login_url='/accounts/login')
+def recieptManage(request, reciept_id , group_id):
     group = get_object_or_404(Group, id = group_id)
-    reciept = get_object_or_404(Reciept, id=id)
+    reciept = get_object_or_404(Reciept, id = reciept_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
     itemList = Item.objects.filter(reciept = reciept)
@@ -110,18 +123,14 @@ def recieptManage(request, id , group_id):
         if formset.is_valid():
             for form in formset:
                 if form.cleaned_data != {}:
-                    # print(form.cleaned_data)
-                    itemInfo = itemList.get(id = form.cleaned_data['itemId']).iteminfo_set.get(user=request.user)
-                    itemInfo.amount = form.cleaned_data['purchasedAmount']
-                    itemInfo.save()
-            recieptInfo, _ = reciept.recieptinfo_set.get_or_create(user = request.user)
-            recieptInfo.save()
+                    if form.cleaned_data['purchasedAmount'] > 0:
+                        itemInfo = itemList.get(id = form.cleaned_data['itemId']).iteminfo_set.get(user=request.user)
+                        itemInfo.amount = form.cleaned_data['purchasedAmount']
+                        itemInfo.save()
+            return redirect('reciept-list', group_id=group_id)
+        
 
-        else:
-            print(formset.errors)
-        return redirect('reciept-view', id = id, group_id=group_id)
-
-    formset = ManageFormSet(None, initial = initial)
+    formset = ManageFormSet(request.POST or None, initial = initial)
 
     itemList = zip(itemList, formset)
 
@@ -129,13 +138,13 @@ def recieptManage(request, id , group_id):
         'items': itemList,
         'reciept': reciept,
         'group_id': group_id,
-        'formset': formset
+        'formset': formset,
 
     }
     return render(request, 'reciept/recieptManage.html', context)
 
 
-@login_required
+@login_required(redirect_field_name='next', login_url='/accounts/login')
 def addGroup(request):
     form = GroupForm()
 
@@ -150,21 +159,21 @@ def addGroup(request):
     return render(request, 'reciept/groupNew.html', context)
 
 
-@login_required
-def removeReciept(request, id, group_id):
+@login_required(redirect_field_name='next', login_url='/accounts/login')
+def removeReciept(request, reciept_id, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    reciept = get_object_or_404(Reciept, id=id)
+    reciept = get_object_or_404(Reciept, id = reciept_id)
     reciept.delete()
     return redirect('index')
 
-@login_required
-def removeRecieptConfirmation(request, id, group_id):
+@login_required(redirect_field_name='next', login_url='/accounts/login')
+def removeRecieptConfirmation(request, reciept_id, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    reciept = get_object_or_404(Reciept, id=id)
+    reciept = get_object_or_404(Reciept, id = reciept_id)
     context = {
         'id': id,
         'date': reciept.date,
@@ -173,72 +182,100 @@ def removeRecieptConfirmation(request, id, group_id):
     }
     return render(request, 'reciept/removalConfirmation.html', context)
 
-@login_required
+@login_required(redirect_field_name='next', login_url='/accounts/login')
 def addReciept(request, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
     
-    reciept = Reciept(wholeCost = 0, group = group, owner = request.user)
+    reciept = Reciept(group = group, owner = request.user)
     reciept.save()
 
-    return redirect('reciept-edit', id=reciept.id, group_id=group_id)
+    return redirect('reciept-edit', reciept_id = reciept.id, group_id = group_id)
 
-@login_required
-def profile(request, group_id):
+@login_required(redirect_field_name='next', login_url='/accounts/login')
+def transactionView(request, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
 
-    groupUserProfile, _ = group.groupuserprofile_set.get_or_create(user = request.user)
-    balancesInfo = groupUserProfile.balanceinfo_set.all()
+    transactions = group.transaction_set.filter(Q(sender = request.user) | Q(recipiant = request.user)).order_by('-date','-time')
 
-    transactions = group.transaction_set.filter(Q(sender = request.user) | Q(recipiant = request.user))
+    form = TransactionForm(queryset = group.accounts.all().exclude(id = request.user.id), data = request.POST or None)
+
+    if request.method == 'POST':
+
+        if form.is_valid():
+            if form.cleaned_data['amount'] > 0:
+                newTransaction = Transaction(
+                    amount = form.cleaned_data['amount'],
+                    recipiant =  form.cleaned_data['recipiant'],
+                    sender = request.user,
+                    group = group
+                )
+                newTransaction.save()
+
+                return redirect('transaction-view', group_id=group_id)
 
     context = {
-        'balances': balancesInfo,
         'transactions': transactions,
         'group_id': group_id,
         'user': request.user,
+        'form': form
     }
 
-    return render(request, 'reciept/profile.html', context)
+    return render(request, 'reciept/transactionView.html', context)
 
-@login_required
-def newTransaction(request, group_id):
-    group = get_object_or_404(Group, id = group_id)
-    if not group.accounts.filter(username = request.user.username).exists():
-        raise PermissionDenied
 
-    accounts = group.accounts.all()
+def loginView(request):
+    loginForm = LoginForm(data = request.POST or None)
 
     if request.method == 'POST':
-        form = TransactionForm(queryset=accounts, data = request.POST)
-        if form.is_valid():
-            newTransaction = Transaction(
-                amount = form.cleaned_data['amount'],
-                recipiant =  form.cleaned_data['recipiant'],
-                sender = request.user,
-                group = group
-            )
-            newTransaction.save()
-            recipiantUserGroupProfile, _ = group.groupuserprofile_set.get_or_create(user = form.cleaned_data['recipiant'])
-            userGroupProfile, _ = group.groupuserprofile_set.get_or_create(user = request.user)
-            recipiantBalance, _ = recipiantUserGroupProfile.balanceinfo_set.get_or_create(userTo = request.user)
-            userBalance, _ = userGroupProfile.balanceinfo_set.get_or_create(userTo = form.cleaned_data['recipiant'])
+        if loginForm.is_valid():
+            userObj = authenticate(request, username = loginForm.cleaned_data['username'], password = loginForm.cleaned_data['password'])
+            if userObj != None:
+                login(request, userObj)
+                return redirect('index')
+            else:
+                loginForm.add_error(None, 'Invalid username or password')
 
-            recipiantBalance.amount += form.cleaned_data['amount']
-            userBalance.amount -= form.cleaned_data['amount']
-            recipiantBalance.save()
-            userBalance.save()
-
-            return redirect('profile', group_id=group_id)
-
-    
-    form = TransactionForm(queryset=accounts)
 
     context = {
-        'form': form,
+        'form': loginForm,
+        'next': request.GET.get('next') or ''
     }
 
-    return render(request, 'reciept/newTransaction.html', context)
+    return render(request, 'registration/login.html', context)
+
+def logoutMethod(request):
+    logout(request)
+
+    return redirect('login')
+
+def signupView(request):
+    signupForm = SignupForm(data = request.POST or None)
+
+    if request.method == 'POST':
+        if signupForm.is_valid():
+            if not User.objects.filter(username=signupForm.cleaned_data['username']).exists():
+                try:
+                    password_validation.validate_password(signupForm.cleaned_data['password1'])
+                    if signupForm.cleaned_data['password1'] == signupForm.cleaned_data['password2']:
+                        userObj = User.objects.create_user(signupForm.cleaned_data['username'], signupForm.cleaned_data['email'], signupForm.cleaned_data['password1'])
+                        userObj.first_name = signupForm.cleaned_data['firstName']
+                        userObj.last_name = signupForm.cleaned_data['lastName']
+                        userObj.save()
+                        login(request, userObj)
+                        return redirect('index')
+                    else:
+                        signupForm.add_error(field='password2', error = 'Passwords not matching')
+                except ValidationError:
+                        signupForm.add_error(field='password1', error='Insufficient password')
+            else:
+                signupForm.add_error(field='username', error = 'Username already exists')
+
+    context = {
+        'form': signupForm
+    }
+
+    return render(request, 'registration/signup.html', context)

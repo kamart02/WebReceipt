@@ -1,0 +1,81 @@
+{% extends "reciept/mainModule.html" %}
+
+{% load tags %}
+
+{% block content %}
+    <div class='container-fluid'>
+        <h1 class='text-black mt-4 ms-3'>
+            Users and reciepts
+        </h1>
+        <h3 class='text-muted mb-3 ms-3'>
+            Select a reciept to access detailed information
+        </h3>
+        <div class='row'>
+            <div class='col-lg-2 ps-4 pe-4 '>
+                <table class='table w-100 ' >
+                    <thead class='w-100'>
+                        <tr>
+                            <th>
+                                User
+                            </th>
+                            <th>
+                                Owing
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class='w-100'>
+                        {% for account, amount in accounts %}
+                            <tr>
+                                <td class='overflow-hidden' style='max-width:10px; width:80%'>
+                                    {% if account.first_name%}
+                                        {{account.first_name}} {{account.last_name}}
+                                    {% else %}
+                                        {{account.username}}
+                                    {% endif %}
+                                </td>
+                                <td class={% if amount > 0 %}'text-danger'{%elif amount < 0%}'text-success'{%else%}'text-muted'{%endif%} >
+                                    {{amount}}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            
+                                <td colspan='2'>
+                                    <a href='#'>
+                                        Add a new user
+                                    </a>
+                                </td>
+                            
+                        </tr>
+                    </tbody>
+                </table>
+                <a type='button' href={% url 'transaction-view' group_id%} class='btn btn-light'>
+                    See and add transactions
+                </a>
+            </div>
+            <div class='col-lg-10'>
+                <div class='row row-cols-1 row-cols-md-4 g-4  w-100'>
+                    {% for reciept in reciepts %}
+                    <div class='col'>
+                        <a href={% url 'reciept-view' group_id reciept.id %} role="button" class='card text-decoration-none' style='height:180px'>
+                            <div class='card-body text-black d-flex flex-column justify-content-between'>
+                                <h3 class = 'card-title'>
+                                    {{ reciept.date }} {{reciept.time}}
+                                </h5>
+                                <p> Owner: {{reciept.owner}} </p>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    <div class='col'>
+                        <a href={% url 'reciept-add' group_id %} role="button" class='card text-decoration-none align-items-center justify-content-center' style='height:180px'>
+                            <h5 class=' text-center text-muted'>Add a new reciept!</h5>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+{% endblock %}

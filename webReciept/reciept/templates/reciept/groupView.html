@@ -1,0 +1,42 @@
+{% extends "reciept/mainModule.html" %}
+
+{% load tags %}
+
+{% block content %}
+    
+    <div class="container mt-4">
+        <h1 class='text-black'>
+            User groups
+        </h1>
+        <h3 class='text-muted mb-3'>
+            Select a user group to access reciepts
+        </h3>
+        <div class='row row-cols-1 row-cols-md-3 g-4'>
+            {% for element in groups %}
+            <div class='col'>
+                <a href={% url 'reciept-list' element.id %} role="button" class='card text-decoration-none' style='height:180px'>
+                    <div class='card-body text-black'>
+                        <h5 class = 'card-title'>{{ element.name }}</h5>
+                        {% if element.accounts.all|length > 1%}
+                        <ul>
+                            {% for account in element.accounts|removeUserAndCutTo4:user %}
+                                <li>{{account.username}}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class='text-muted'>
+                            There are no users in this group other then you.
+                        <p>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+            <div class='col'>
+                <a href={% url 'group-new' %} role="button" class='card text-decoration-none align-items-center justify-content-center' style='height:180px'>
+                    <h5 class=' text-center text-muted'>Add a new group!</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
