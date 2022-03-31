@@ -1,1 +1,1 @@
-A web app to manage receipts online.
+A web app to manage receipts online in django and bootstrap
