@@ -1,0 +1,1 @@
+A web app to manage receipts online.
