@@ -1,4 +1,4 @@
-"""webReciept URL Configuration
+"""webreceipt URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.2/topics/http/urls/
@@ -19,5 +19,5 @@ from django.urls.conf import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('reciept.urls')),
+    path('', include('receipt.urls')),
 ]

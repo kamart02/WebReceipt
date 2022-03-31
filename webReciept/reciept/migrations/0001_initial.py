@@ -32,12 +32,12 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='Reciept',
+            name='receipt',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date', models.DateField(auto_now_add=True)),
                 ('time', models.TimeField(auto_now_add=True)),
-                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reciept.group')),
+                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='receipt.group')),
                 ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
@@ -46,16 +46,16 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.DecimalField(decimal_places=2, max_digits=9)),
-                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reciept.group')),
+                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='receipt.group')),
                 ('recipiant', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recipiant', to=settings.AUTH_USER_MODEL)),
                 ('sender', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sender', to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
-            name='RecieptInfo',
+            name='receiptInfo',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('reciept', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reciept.reciept')),
+                ('receipt', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='receipt.receipt')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
@@ -64,13 +64,13 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.DecimalField(decimal_places=2, default=0, max_digits=9)),
-                ('item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reciept.item')),
+                ('item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='receipt.item')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.AddField(
             model_name='item',
-            name='reciept',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='reciept.reciept'),
+            name='receipt',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='receipt.receipt'),
         ),
     ]

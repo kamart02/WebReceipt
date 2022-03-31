@@ -7,7 +7,7 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reciept', '0002_delete_recieptinfo'),
+        ('receipt', '0002_delete_receiptinfo'),
     ]
 
     operations = [

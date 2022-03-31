@@ -25,7 +25,7 @@ class ItemFormSetWithWidget(BaseInlineFormSet):
         return CheckboxInput(attrs={'class': 'form-check-input'})
 
 ItemFormSet = inlineformset_factory(
-    models.Reciept,
+    models.receipt,
     models.Item,
     ItemForm,
     can_delete=True,

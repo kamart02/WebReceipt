@@ -1,8 +1,8 @@
 <!doctype HTML>
 <head></head>
 <body>
-    <p>Nazwa paragonu: {{reciept.name}} </p>
-    <p>Data dodania: {{reciept.date}} {{reciept.time}}</p>
+    <p>Nazwa paragonu: {{receipt.name}} </p>
+    <p>Data dodania: {{receipt.date}} {{receipt.time}}</p>
      <form method="post">
      {% csrf_token %}
     {{ formset.management_form }}

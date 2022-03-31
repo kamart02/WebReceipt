@@ -8,16 +8,16 @@ class BalanceInfo():
         self.userTo = userTo
 
     def amount(self):
-        recieptInfos = self.user.iteminfo_set.filter(item__reciept__group = self.group, item__reciept__owner = self.userTo)
-        recieptInfosTo = self.userTo.iteminfo_set.filter(item__reciept__group = self.group, item__reciept__owner = self.user)
+        receiptInfos = self.user.iteminfo_set.filter(item__receipt__group = self.group, item__receipt__owner = self.userTo)
+        receiptInfosTo = self.userTo.iteminfo_set.filter(item__receipt__group = self.group, item__receipt__owner = self.user)
         
         amount = decimal.Decimal(0)
 
-        for recieptInfo in recieptInfos:
-            amount += recieptInfo.cost
+        for receiptInfo in receiptInfos:
+            amount += receiptInfo.cost
 
-        for recieptInfo in recieptInfosTo:
-            amount -= recieptInfo.cost
+        for receiptInfo in receiptInfosTo:
+            amount -= receiptInfo.cost
 
         transactionsTo = self.user.sender.filter(group = self.group)
         transactionsFrom = self.user.recipiant.filter(group = self.group)
@@ -34,14 +34,14 @@ class BalanceInfo():
         return "Group {}, {} to {}".format(self.groupUserProfile.group.name, self.groupUserProfile.user.username, self.userTo.username)
 
 
-class RecieptInfo():
-    def __init__(self, user, reciept):
+class receiptInfo():
+    def __init__(self, user, receipt):
         self.user = user
-        self.reciept = reciept
+        self.receipt = receipt
     #cost = models.DecimalField(max_digits=9, decimal_places=2, default=0)
 
     def cost(self):
-        items = self.reciept.item_set.all()
+        items = self.receipt.item_set.all()
         
         cost = decimal.Decimal(0)
         for item in items:

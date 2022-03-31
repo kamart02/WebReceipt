@@ -1,10 +1,10 @@
-{% extends 'reciept/mainModule.html' %}
+{% extends 'receipt/mainModule.html' %}
 
 {% comment %} <!doctype HTML>
 <head></head>
 <body>
     <a href={% url 'index' %}>Powrot</a>
-    <p>Data dodania: {{reciept.date}} {{reciept.time}}</p>
+    <p>Data dodania: {{receipt.date}} {{receipt.time}}</p>
      <form method="post">
      {% csrf_token %}
     {{ formset.management_form }}
@@ -50,18 +50,18 @@
         <td> {{ formset.empty_form.amount }} </td>
         <td> {{ formset.empty_form.DELETE }} </td>
         {{ formset.empty_form.id }} 
-        {{formset.empty_form.reciept}} 
+        {{formset.empty_form.receipt}} 
     </tr>
 </script>
 
 <div class='container'>
     <h1 class='text-black mt-4 ms-3'>
-        Edit reciept details
+        Edit receipt details
     </h1>
     <h3 class='text-muted mb-3 ms-3'>
         Edit the name, amount and cost of items. <span class='text-decoration-underline'>Remember editing or adding items will recalculate balances.</snan>
     </h3>
-    <div id='recieptItems' class='mt-3'>
+    <div id='receiptItems' class='mt-3'>
         <form method='post' class='d-flex flex-column'>
             {% csrf_token %}
             {{ formset.management_form }}

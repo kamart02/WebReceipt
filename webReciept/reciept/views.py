@@ -5,32 +5,32 @@ from django.forms import ValidationError
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import Group, Reciept, Item, ItemInfo, Transaction
+from .models import Group, receipt, Item, ItemInfo, Transaction
 from .forms import GroupForm, ItemFormSet, ManageForm, ManageFormSet, SignupForm, TransactionForm, LoginForm
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import  PermissionDenied
 from django.db.models import Q
 from django.contrib.auth import authenticate, login, logout, password_validation
 from django.contrib.auth.models import User
-from .temporaryModels import BalanceInfo, RecieptInfo
+from .temporaryModels import BalanceInfo, receiptInfo
 
 
 def index(request):
     if request.user.is_authenticated:
         return redirect('groupView')
     else:
-        return render(request, 'reciept/index.html')
+        return render(request, 'receipt/index.html')
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
-def recieptList(request, group_id):
+def receiptList(request, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    reciepts = Reciept.objects.filter(group = group).order_by('-date', '-time')
+    receipts = receipt.objects.filter(group = group).order_by('-date', '-time')
 
     accounts = group.accounts.exclude(id = request.user.id)
     amounts = []
-    recieptAmounts = []
+    receiptAmounts = []
 
     for account in accounts:
         balinfo = BalanceInfo(user = request.user, group = group, userTo = account)
@@ -38,11 +38,11 @@ def recieptList(request, group_id):
 
 
     context = {
-        'reciepts': reciepts,
+        'receipts': receipts,
         'group_id': group_id,
         'accounts': zip(accounts, amounts),
     }
-    return render(request, 'reciept/recieptList.html', context)
+    return render(request, 'receipt/receiptList.html', context)
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
 def groupView(request):
@@ -50,57 +50,57 @@ def groupView(request):
     context = {
         'groups': groups,
     }
-    return render(request, 'reciept/groupView.html', context)
+    return render(request, 'receipt/groupView.html', context)
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
-def recieptView(request, reciept_id, group_id):
-    reciept = get_object_or_404(Reciept, id = reciept_id)
+def receiptView(request, receipt_id, group_id):
+    receipt = get_object_or_404(receipt, id = receipt_id)
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    itemList = Item.objects.filter(reciept = reciept)
+    itemList = Item.objects.filter(receipt = receipt)
 
-    recieptinfo = RecieptInfo(user = request.user, reciept = reciept)
+    receiptinfo = receiptInfo(user = request.user, receipt = receipt)
 
     context = {
         'items': itemList,
-        'reciept': reciept,
+        'receipt': receipt,
         'group_id': group_id,
-        'wholeBoughtCost': recieptinfo.cost()
+        'wholeBoughtCost': receiptinfo.cost()
     }
 
-    return render(request, 'reciept/recieptView.html', context)
+    return render(request, 'receipt/receiptView.html', context)
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
-def recieptEdit(request, reciept_id, group_id):
+def receiptEdit(request, receipt_id, group_id):
     group = get_object_or_404(Group, id = group_id)
-    reciept = get_object_or_404(Reciept, id = reciept_id)
-    if not reciept.owner == request.user:
+    receipt = get_object_or_404(receipt, id = receipt_id)
+    if not receipt.owner == request.user:
         raise PermissionDenied
-    formset = ItemFormSet(request.POST or None, instance = reciept)
+    formset = ItemFormSet(request.POST or None, instance = receipt)
 
     if request.method == 'POST':
         if formset.is_valid():
-            formset.instance = reciept
+            formset.instance = receipt
             formset.save()
             
-            return redirect('reciept-list', group_id=group_id)
+            return redirect('receipt-list', group_id=group_id)
 
     context = {
         'formset' : formset,
-        'reciept' : reciept,
+        'receipt' : receipt,
         'group_id': group_id
     }
     
-    return render(request, 'reciept/recieptEdit.html', context)
+    return render(request, 'receipt/receiptEdit.html', context)
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
-def recieptManage(request, reciept_id , group_id):
+def receiptManage(request, receipt_id , group_id):
     group = get_object_or_404(Group, id = group_id)
-    reciept = get_object_or_404(Reciept, id = reciept_id)
+    receipt = get_object_or_404(receipt, id = receipt_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    itemList = Item.objects.filter(reciept = reciept)
+    itemList = Item.objects.filter(receipt = receipt)
 
     initial = []
     
@@ -127,7 +127,7 @@ def recieptManage(request, reciept_id , group_id):
                         itemInfo = itemList.get(id = form.cleaned_data['itemId']).iteminfo_set.get(user=request.user)
                         itemInfo.amount = form.cleaned_data['purchasedAmount']
                         itemInfo.save()
-            return redirect('reciept-list', group_id=group_id)
+            return redirect('receipt-list', group_id=group_id)
         
 
     formset = ManageFormSet(request.POST or None, initial = initial)
@@ -136,12 +136,12 @@ def recieptManage(request, reciept_id , group_id):
 
     context = {
         'items': itemList,
-        'reciept': reciept,
+        'receipt': receipt,
         'group_id': group_id,
         'formset': formset,
 
     }
-    return render(request, 'reciept/recieptManage.html', context)
+    return render(request, 'receipt/receiptManage.html', context)
 
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
@@ -156,42 +156,42 @@ def addGroup(request):
     context = {
         'form': form.as_ul()
     }
-    return render(request, 'reciept/groupNew.html', context)
+    return render(request, 'receipt/groupNew.html', context)
 
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
-def removeReciept(request, reciept_id, group_id):
+def removereceipt(request, receipt_id, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    reciept = get_object_or_404(Reciept, id = reciept_id)
-    reciept.delete()
+    receipt = get_object_or_404(receipt, id = receipt_id)
+    receipt.delete()
     return redirect('index')
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
-def removeRecieptConfirmation(request, reciept_id, group_id):
+def removereceiptConfirmation(request, receipt_id, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
-    reciept = get_object_or_404(Reciept, id = reciept_id)
+    receipt = get_object_or_404(receipt, id = receipt_id)
     context = {
         'id': id,
-        'date': reciept.date,
-        'time': reciept.time,
+        'date': receipt.date,
+        'time': receipt.time,
         'group_id': group_id
     }
-    return render(request, 'reciept/removalConfirmation.html', context)
+    return render(request, 'receipt/removalConfirmation.html', context)
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
-def addReciept(request, group_id):
+def addreceipt(request, group_id):
     group = get_object_or_404(Group, id = group_id)
     if not group.accounts.filter(username = request.user.username).exists():
         raise PermissionDenied
     
-    reciept = Reciept(group = group, owner = request.user)
-    reciept.save()
+    receipt = receipt(group = group, owner = request.user)
+    receipt.save()
 
-    return redirect('reciept-edit', reciept_id = reciept.id, group_id = group_id)
+    return redirect('receipt-edit', receipt_id = receipt.id, group_id = group_id)
 
 @login_required(redirect_field_name='next', login_url='/accounts/login')
 def transactionView(request, group_id):
@@ -224,7 +224,7 @@ def transactionView(request, group_id):
         'form': form
     }
 
-    return render(request, 'reciept/transactionView.html', context)
+    return render(request, 'receipt/transactionView.html', context)
 
 
 def loginView(request):
