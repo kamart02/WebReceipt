@@ -4,7 +4,7 @@ import gruut_ipa
 from .models import *
 
 # Create your tests here.
-class receiptTestCase(TestCase):
+class ReceiptTestCase(TestCase):
     def setUp(self):
         self.u1 = User.objects.create(username = 'tester1', password = '123456789Abc!')
         self.u2 = User.objects.create(username = 'tester2', password = '!Abc123456789')
@@ -14,7 +14,7 @@ class receiptTestCase(TestCase):
         self.group1.accounts.add(self.u1, self.u2, self.u3)
         
     def test_receipt_creation_with_items(self):
-        receipt = receipt.objects.create(group = self.group1, owner = self.u1)
+        receipt = Receipt.objects.create(group = self.group1, owner = self.u1)
 
         sum = 0
 
@@ -28,11 +28,11 @@ class receiptTestCase(TestCase):
 
     def test_receipt_existance(self):
         self.test_receipt_creation_with_items()
-        self.assertIsNotNone(receipt.objects.get(owner = self.u1))
+        self.assertIsNotNone(Receipt.objects.get(owner = self.u1))
 
     def test_itemInfo_and_receiptInfo(self):
         self.test_receipt_creation_with_items()
-        receipt = receipt.objects.get(owner = self.u1)
+        receipt = Receipt.objects.get(owner = self.u1)
 
         items = receipt.item_set.all()
 

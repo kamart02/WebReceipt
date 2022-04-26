@@ -34,7 +34,7 @@ class BalanceInfo():
         return "Group {}, {} to {}".format(self.groupUserProfile.group.name, self.groupUserProfile.user.username, self.userTo.username)
 
 
-class receiptInfo():
+class ReceiptInfo():
     def __init__(self, user, receipt):
         self.user = user
         self.receipt = receipt

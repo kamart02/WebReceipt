@@ -22,7 +22,7 @@ class Transaction(models.Model):
     date = models.DateField(auto_now_add=True)
     time = models.TimeField(auto_now_add=True)
 
-class receipt(models.Model):
+class Receipt(models.Model):
     date = models.DateField(auto_now_add=True)
     time = models.TimeField(auto_now_add=True)
     #wholeCost = models.DecimalField(max_digits=25, decimal_places=2, default=0)
@@ -42,7 +42,7 @@ class receipt(models.Model):
 
 
 class Item(models.Model):
-    receipt = models.ForeignKey(receipt, on_delete=models.CASCADE)
+    receipt = models.ForeignKey(Receipt, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=9, decimal_places=5)
     price = models.DecimalField(max_digits=9, decimal_places=2)
