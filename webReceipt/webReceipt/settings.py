@@ -100,6 +100,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+#CRSF
+CSRF_TRUSTED_ORIGINS = ['http://192.168.0.10:8000']
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
